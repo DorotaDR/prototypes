@@ -202,8 +202,206 @@ TODO
 TODO
 
 
-### 7.11. Model Deployment
-TODO
+### 7.11. Model Deployment (KServe — Autogluon ensemble on Red Hat OpenShift AI)
+
+This section describes how to deploy an Autogluon ensemble on the cluster using KServe. You can obtain the serving image in one of two ways; both paths then converge to creating a **Serving Runtime** and deploying the model.
+
+**Flow overview**
+
+- **Path A:** Build the Docker image locally and push it to a container registry (e.g. Quay). *(Steps described below.)*
+- **Path B:** Build the image directly on Red Hat OpenShift AI. *(Not yet documented; instructions will be added later.)*
+
+Once the image is available in a registry or on cluster (from Path A or Path B), the steps are the same: **Prepare ServingRuntime YAML** → **create Serving Runtime on the cluster** → **add image-pull credentials** → **create a deployment** with your Autogluon model (e.g. from S3).
+
+---
+
+#### Path A: Build image locally and push to a container registry
+
+**Dockerfile reference**
+
+Build the image from a Dockerfile like the following (adjust paths if your layout differs). It uses Python 3.11, installs KServe and storage dependencies, then the Autogluon server. Save it (e.g. as `python/autogluon.Dockerfile`) and use it in the build command in step 1.
+
+```dockerfile
+ARG PYTHON_VERSION=3.11
+ARG BASE_IMAGE=python:${PYTHON_VERSION}-slim-bookworm
+ARG VENV_PATH=/prod_venv
+
+FROM ${BASE_IMAGE} AS builder
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends python3-dev curl build-essential && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    ln -s /root/.local/bin/uv /usr/local/bin/uv
+
+# Create virtual environment
+ARG VENV_PATH
+ENV VIRTUAL_ENV=${VENV_PATH}
+RUN uv venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# ========== Install kserve dependencies ==========
+COPY kserve/pyproject.toml kserve/uv.lock kserve/
+RUN cd kserve && uv sync --active --no-cache
+
+COPY kserve kserve
+RUN cd kserve && uv sync --active --no-cache
+
+# ========== Install kserve storage dependencies ==========
+COPY storage/pyproject.toml storage/uv.lock storage/
+RUN cd storage && uv sync --active --no-cache
+
+COPY storage storage
+RUN cd storage && uv pip install . --no-cache
+
+# ========== Install autogluonserver dependencies ==========
+COPY autogluonserver/pyproject.toml autogluonserver/
+RUN cd autogluonserver && uv sync --active --no-cache
+
+COPY autogluonserver autogluonserver
+RUN cd autogluonserver && uv sync --active --no-cache
+
+# Generate third-party licenses
+COPY pyproject.toml pyproject.toml
+COPY third_party/pip-licenses.py pip-licenses.py
+# TODO: Remove this when upgrading to python 3.11+
+RUN pip install --no-cache-dir tomli
+RUN mkdir -p third_party/library && python3 pip-licenses.py
+
+# =================== Final stage ===================
+FROM ${BASE_IMAGE} AS prod
+
+COPY third_party third_party
+
+# Activate virtual env
+ARG VENV_PATH
+ENV VIRTUAL_ENV=${VENV_PATH}
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN useradd kserve -m -u 1000 -d /home/kserve
+
+COPY --from=builder --chown=kserve:kserve third_party third_party
+COPY --from=builder --chown=kserve:kserve $VIRTUAL_ENV $VIRTUAL_ENV
+COPY --from=builder kserve kserve
+COPY --from=builder storage storage
+COPY --from=builder autogluonserver autogluonserver
+
+USER 1000
+ENV PYTHONPATH=/autogluonserver
+ENTRYPOINT ["python", "-m", "autogluonserver"]
+```
+
+1. **Build the Docker image** from the repository root (where the Dockerfile and the `kserve`, `storage`, and `autogluonserver` directories exist). Use `-t` with the full image URL so you can push without a separate tag step. Run:
+
+   ```bash
+   nerdctl -n k8s.io build -f python/autogluon.Dockerfile -t quay.io/rh-ee-mzabinsk/kserve-autogluonserver:latest .
+   ```
+
+   Replace `quay.io/rh-ee-mzabinsk/kserve-autogluonserver:latest` with your registry and image name. Alternatively, use `docker build` with the same `-f` and `-t` values.
+
+2. **Push the image** to your container registry:
+
+   ```bash
+   nerdctl -n k8s.io push quay.io/rh-ee-mzabinsk/kserve-autogluonserver:latest
+   ```
+
+   Use the same image URL in the ServingRuntime YAML in the next section (`PATH_TO_YOUR_QUAY_IMAGE`).
+
+#### Path B: Build image directly on Red Hat OpenShift AI
+
+*Instructions for this path are not yet available; they will be added in a later update. After you have the image in a registry (via Path A or Path B), follow the common steps below.*
+
+---
+
+#### Common steps (after the image is in a registry)
+
+The following steps apply regardless of whether the image was built locally (Path A) or on RHOAI (Path B). Start with **Prepare ServingRuntime YAML**.
+
+##### Prepare ServingRuntime YAML
+
+Create a YAML file for the KServe Serving Runtime. Set `image` to your actual image URL (e.g. `quay.io/rh-ee-mzabinsk/kserve-autogluonserver:latest`).
+
+```yaml
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: kserve-autogluonserver
+spec:
+  annotations:
+    prometheus.kserve.io/port: '8080'
+    prometheus.kserve.io/path: "/metrics"
+  supportedModelFormats:
+    - name: autogluon
+      version: "1"
+      autoSelect: true
+      priority: 2
+  protocolVersions:
+    - v1
+    - v2
+  containers:
+    - name: kserve-container
+      image: {PATH_TO_YOUR_QUAY_IMAGE}
+      args:
+        - --model_name=autogluon
+        - --model_dir=/mnt/models
+        - --http_port=8080
+      securityContext:
+        allowPrivilegeEscalation: false
+        privileged: false
+        runAsNonRoot: true
+        capabilities:
+          drop:
+            - ALL
+      resources:
+        requests:
+          cpu: "1"
+          memory: 2Gi
+        limits:
+          cpu: "1"
+          memory: 2Gi
+```
+
+Replace `{PATH_TO_YOUR_QUAY_IMAGE}` with the full image URL (e.g. `quay.io/rh-ee-mzabinsk/kserve-autogluonserver:latest`).
+
+##### Create the Serving Runtime on OpenShift
+
+1. Log in to the Red Hat OpenShift AI cluster.
+2. In the left menu: **Settings** → **Model resources and operations** → **Serving runtimes** → **Add serving runtime** → **Upload files**.
+3. Upload the ServingRuntime YAML you prepared (with `image` set to your Quay/registry URL).
+4. In **Select the API protocol this runtime supports**, choose **REST**.
+5. In **Select the model types this runtime supports**, select **Predictive model**.
+6. Click **Create**.
+
+##### Add credentials so the cluster can pull the image
+
+1. Log in to the Red Hat OpenShift Console.
+2. Go to **Workloads** → **Secrets** → **Create** → **Image pull secret**.
+3. Enter a secret name and copy it for the next step.
+4. Ensure you are logged in to your image registry (e.g. Quay) so the secret can be used to pull the image.
+
+Then attach the secret to the service account used by the runtime:
+
+1. In the console: **User Management** → **ServiceAccounts** (choose the correct namespace).
+2. Open the **builder** service account → **YAML**.
+3. Under `imagePullSecrets`, add an entry with the secret name you created (e.g. `name: your-image-pull-secret-name`).
+
+##### Create the deployment with your Autogluon ensemble
+
+This assumes your Autogluon model (e.g. from an AutoML run) is stored in S3.
+
+1. In the left menu: **AI hub** → **Deployments** → **Deploy model**.
+2. Under **Model location**, choose **S3 object storage**.
+3. Create a new connection or use an existing one and fill in the S3 credentials and path to the model.
+4. Fill in all required fields (bucket, path, etc.).
+5. For **Model type**, choose **Predictive model**.
+6. Click **Next**.
+7. Under **Model framework**, select **autogluon - 1**.
+8. Under **Serving runtime**, choose **Select from list…** → **kserve-autogluonserver**.
+9. Click **Next** → **Deploy model**.
+
+After the deployment is created, you can use the deployed endpoint for inference. For more on serving and APIs, see [Deploying models on the single-model serving platform](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_cloud_service/1/html/deploying_models/deploying_models_on_the_single_model_serving_platform).
 
 ---
 
