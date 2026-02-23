@@ -209,9 +209,9 @@ This section describes how to deploy an Autogluon ensemble on the cluster using 
 **Flow overview**
 
 - **Path A:** Build the Docker image locally and push it to a container registry (e.g. Quay). *(Steps described below.)*
-- **Path B:** Build the image directly on Red Hat OpenShift AI. *(Not yet documented; instructions will be added later.)*
+- **Path B:** Build the image directly on the cluster using OpenShift ImageStream and BuildConfig. *(Steps described below.)*
 
-Once the image is available in a registry or on cluster (from Path A or Path B), the steps are the same: **Prepare ServingRuntime YAML** → **create Serving Runtime on the cluster** → **add image-pull credentials** → **create a deployment** with your Autogluon model (e.g. from S3).
+Once the image is available in a registry or on cluster (from Path A or Path B), the steps are the same: **Prepare ServingRuntime YAML** (use the Quay variant or the cluster-built variant) → **create Serving Runtime on the cluster** → **add image-pull credentials** (skip for Path B) → **create a deployment** with your Autogluon model (e.g. from S3).
 
 ---
 
@@ -322,26 +322,75 @@ ENTRYPOINT ["python", "-m", "autogluonserver"]
 
 #### Path B: Build image directly on Red Hat OpenShift AI
 
-*Instructions for this path are not yet available; they will be added in a later update. After you have the image in a registry (via Path A or Path B), follow the common steps below.*
+When you build the image on the cluster instead of pulling it from Quay, use the OpenShift Builds flow and then a Serving Runtime that points to the internal image registry. Use the same project/namespace for the build and for the Serving Runtime (e.g. `automl-project`).
+
+**1. Create ImageStream**
+
+1. In the OpenShift console, left side: **Builds** → **ImageStreams** → **Create ImageStream**.
+2. Paste the following YAML and click **Create**:
+
+```yaml
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: autogluonkserveimagev1
+```
+
+**2. Create BuildConfig**
+
+1. In the console, left side: **Builds** → **BuildConfigs** → **Create BuildConfig** → **YAML View**.
+2. Paste the following and click **Create**:
+
+```yaml
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: autogluonkserveimagev1
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/LukaszCmielowski/kserve
+      ref: dev-autogluon-server
+    contextDir: python
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: autogluon.Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: autogluonkserveimagev1:latest
+  triggers:
+    - type: ConfigChange
+```
+
+OpenShift will start a build. Wait for the build to complete (e.g. in **Builds** → **Builds**). The image will be available in the internal registry as `image-registry.openshift-image-registry.svc:5000/<namespace>/autogluonkserveimagev1:latest` (use your project namespace, e.g. `automl-project`).
+
+After the image is built, follow the **Common steps** below; for Path B use the **Serving Runtime YAML for cluster-built image** and you can skip adding image-pull credentials for that image.
 
 ---
 
-#### Common steps (after the image is in a registry)
+#### Common steps (after the image is in a registry or built on cluster)
 
-The following steps apply regardless of whether the image was built locally (Path A) or on RHOAI (Path B). Start with **Prepare ServingRuntime YAML**.
+The following steps apply whether the image was built locally (Path A) or on OpenShift (Path B). Start with **Prepare ServingRuntime YAML**.
 
 ##### Prepare ServingRuntime YAML
 
-Create a YAML file for the KServe Serving Runtime. Set `image` to your actual image URL (e.g. `quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest`).
+Create a YAML file for the KServe Serving Runtime. Set `metadata.namespace` to your project (e.g. `automl-project`). Set `image` according to how you obtained the image:
+
+- **Path A (Quay):** `quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest`
+- **Path B (build on cluster):** `image-registry.openshift-image-registry.svc:5000/<namespace>/autogluonkserveimagev1:latest` (use the same namespace as above)
 
 ```yaml
 apiVersion: serving.kserve.io/v1alpha1
 kind: ServingRuntime
 metadata:
   name: kserve-autogluonserver
+  namespace: automl-project
 spec:
   annotations:
-    prometheus.kserve.io/port: '8080'
+    prometheus.kserve.io/port: "8080"
     prometheus.kserve.io/path: "/metrics"
   supportedModelFormats:
     - name: autogluon
@@ -353,7 +402,7 @@ spec:
     - v2
   containers:
     - name: kserve-container
-      image: {PATH_TO_YOUR_QUAY_IMAGE}
+      image: {SERVING_IMAGE}
       args:
         - --model_name=autogluon
         - --model_dir=/mnt/models
@@ -374,18 +423,20 @@ spec:
           memory: 2Gi
 ```
 
-Replace `{PATH_TO_YOUR_QUAY_IMAGE}` with the full image URL (e.g. `quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest`).
+Replace `{SERVING_IMAGE}` and, if needed, `automl-project` with the values for your scenario (see list above).
 
 ##### Create the Serving Runtime on OpenShift
 
 1. Log in to the Red Hat OpenShift AI cluster.
 2. In the left menu: **Settings** → **Model resources and operations** → **Serving runtimes** → **Add serving runtime** → **Upload files**.
-3. Upload the ServingRuntime YAML you prepared (with `image` set to your Quay/registry URL).
+3. Upload the ServingRuntime YAML you prepared (with `image` and `namespace` set for your scenario).
 4. In **Select the API protocol this runtime supports**, choose **REST**.
 5. In **Select the model types this runtime supports**, select **Predictive model**.
 6. Click **Create**.
 
 ##### Add credentials so the cluster can pull the image
+
+*If you used Path B (image built on the cluster in the same project), the image is in the internal registry and you can skip this step.*
 
 1. Log in to the Red Hat OpenShift Console.
 2. Go to **Workloads** → **Secrets** → **Create** → **Image pull secret**.
