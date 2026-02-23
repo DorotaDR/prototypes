@@ -296,15 +296,15 @@ ENTRYPOINT ["python", "-m", "autogluonserver"]
 1. **Build the Docker image** from the repository root (where the Dockerfile and the `kserve`, `storage`, and `autogluonserver` directories exist). Use `-t` with the full image URL so you can push without a separate tag step. Run:
 
    ```bash
-   nerdctl -n k8s.io build -f python/autogluon.Dockerfile -t quay.io/rh-ee-mzabinsk/kserve-autogluonserver:latest .
+   nerdctl -n k8s.io build -f python/autogluon.Dockerfile -t quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest .
    ```
 
-   Replace `quay.io/rh-ee-mzabinsk/kserve-autogluonserver:latest` with your registry and image name. Alternatively, use `docker build` with the same `-f` and `-t` values.
+   Replace `quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest` with your registry and image name. Alternatively, use `docker build` with the same `-f` and `-t` values.
 
 2. **Push the image** to your container registry:
 
    ```bash
-   nerdctl -n k8s.io push quay.io/rh-ee-mzabinsk/kserve-autogluonserver:latest
+   nerdctl -n k8s.io push quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest
    ```
 
    Use the same image URL in the ServingRuntime YAML in the next section (`PATH_TO_YOUR_QUAY_IMAGE`).
@@ -321,7 +321,7 @@ The following steps apply regardless of whether the image was built locally (Pat
 
 ##### Prepare ServingRuntime YAML
 
-Create a YAML file for the KServe Serving Runtime. Set `image` to your actual image URL (e.g. `quay.io/rh-ee-mzabinsk/kserve-autogluonserver:latest`).
+Create a YAML file for the KServe Serving Runtime. Set `image` to your actual image URL (e.g. `quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest`).
 
 ```yaml
 apiVersion: serving.kserve.io/v1alpha1
@@ -363,7 +363,7 @@ spec:
           memory: 2Gi
 ```
 
-Replace `{PATH_TO_YOUR_QUAY_IMAGE}` with the full image URL (e.g. `quay.io/rh-ee-mzabinsk/kserve-autogluonserver:latest`).
+Replace `{PATH_TO_YOUR_QUAY_IMAGE}` with the full image URL (e.g. `quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest`).
 
 ##### Create the Serving Runtime on OpenShift
 
