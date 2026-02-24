@@ -371,7 +371,7 @@ Replace `<your-namespace>` with your OpenShift project/namespace (e.g. `automl-p
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
-  name: <image_stream_name>
+  name: <build_config_name>
   namespace: <your-namespace>
 spec:
   source:
@@ -392,7 +392,7 @@ spec:
     - type: ConfigChange
 ```
 
-Use the same `<your-namespace>` and `<image_stream_name>` as for the ImageStream above. **The image stream name must be identical in both resources.**
+Replace `<your-namespace>` with the same namespace as for the ImageStream. Replace `<build_config_name>` with a name for this BuildConfig (e.g. `autogluonkserveimagev1`). Replace `<image_stream_name>` in **spec.output.to.name** with the **same** name you used for the ImageStream in step 1. **The value in output.to.name (before `:latest`) must match the ImageStream name exactly.**
 
 OpenShift will start a build. Wait for the build to complete (e.g. in **Builds** → **Builds**) and ensure the build status is **Complete**. The image will be available in the internal registry as `image-registry.openshift-image-registry.svc:5000/<namespace>/<image_stream_name>:latest` (use your project namespace and the same image stream name you chose, e.g. `automl-project` and `autogluonkserveimagev1`).
 
