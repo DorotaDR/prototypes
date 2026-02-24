@@ -473,6 +473,20 @@ This assumes your Autogluon model (e.g. from an AutoML run) is stored in S3.
 
 After the deployment is created, you can use the deployed endpoint for inference. For more on serving and APIs, see [Deploying models on the single-model serving platform](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_cloud_service/1/html/deploying_models/deploying_models_on_the_single_model_serving_platform).
 
+##### Make the deployment available for inference from outside the cluster
+
+To call the model from outside OpenShift (e.g. from your laptop or another service), expose it via an external route and use the external inference URL.
+
+> **Note:** The deployment must be **stopped** before you can edit it. After saving your changes, **start the deployment** again.
+
+1. In the OpenShift console: **AI hub** → **Deployments**.
+2. Stop the deployment if it is running, then find your deployment, open the **⋮** (three-dot) menu on the right → **Edit**.
+3. Go to **Advanced settings** and enable **Make model deployment available through an external route**.
+4. Optionally enable or disable **Require token authentication** depending on whether you want token-based access.
+5. Click **Next** → **Update deployment**.
+6. Start the deployment again, then return to **AI hub** → **Deployments** and open your deployment.
+7. When the deployment is running, under **Inference endpoint** you will see **Internal** and **External**. Click the external endpoint to copy the external URL and use it for inference from outside the cluster.
+
 ---
 
 ## References
