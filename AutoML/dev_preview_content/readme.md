@@ -411,7 +411,7 @@ Create a YAML file for the KServe Serving Runtime. Set `metadata.namespace` to y
 - **Path A (Quay):** `quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest`
 - **Path B (build on cluster):** `image-registry.openshift-image-registry.svc:5000/<namespace>/<image_stream_name>:latest` (use the same namespace and image stream name as in the ImageStream and BuildConfig above)
 
-Use one of these values for `{SERVING_IMAGE}` in the YAML below.
+Use one of these values for `{SERVING_IMAGE}` in the YAML below, and set `{MODEL_NAME}` to your model name (e.g. `autogluon`).
 
 ```yaml
 apiVersion: serving.kserve.io/v1alpha1
