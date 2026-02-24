@@ -50,7 +50,20 @@ This comparison is based on **DataRobot's automated ML offering** (marketed as *
 
 ---
 
-## 2. Pros of RHOAI's approach vs DataRobot
+## 2. Pros of DataRobot vs RHOAI AutoML
+
+1. **Broader problem and data scope** — Supports tabular, time series (forecasting + nowcasting), text, image, and geospatial data in one platform; clustering and anomaly detection. RHOAI AutoML is tabular-only (plus a separate time-series pipeline) with no image, text, or geospatial support.
+
+2. **Richer EDA and preprocessing** — Broad exploratory data analysis and preprocessing by data type (numeric, categorical, text, image, geospatial), including proprietary preprocessing. RHOAI uses a single pipeline with AutoGluon’s built-in preprocessing.
+
+3. **Mature enterprise platform** — Single vendor for modeling, deployment, and MLOps; commercial support, SLAs, and documented deployment options (PPS, Scoring Code, MLOps Agent). Open stack (RHOAI + AutoGluon) relies on community and Red Hat support.
+
+4. **One integrated experience** — EDA, Autopilot, leaderboard, deployment, and monitoring in a single product and UI. RHOAI spreads workflows across Pipelines UI, Model Registry, and KServe.
+
+
+---
+
+## 3. Pros of RHOAI's approach vs DataRobot
 
 1. **No vendor lock-in** — Stack is open (AutoGluon, Kubeflow Pipelines, MLflow, KServe). Models are standard AutoGluon predictors; you can run and serve them outside RHOAI if needed.
 
