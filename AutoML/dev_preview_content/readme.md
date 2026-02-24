@@ -74,7 +74,7 @@ When an AutoML run completes, you get:
 - **Trained models** — One artifact per top-N model, refitted on the full dataset and ready to use or deploy.
 - **Notebooks** — A generated notebook to load and use the best predictor (predictions, evaluation, etc.).
 
-Artifacts are stored in the artifact store configured for your run (e.g., S3 via your Pipeline Server). For exact artifact paths and layout, see the [pipeline reference](https://github.com/LukaszCmielowski/pipelines-components/tree/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline).
+Artifacts are stored in the artifact store configured for your run (e.g., S3 via your Pipeline Server).
 
 ---
 
@@ -198,15 +198,37 @@ After the run has completed successfully:
 2. Locate the **leaderboard** artifact (e.g., an HTML file in the leaderboard-evaluation output).
 3. Download or open the HTML leaderboard to compare the ranked models and their metrics.
 
-For exact artifact paths and layout, see the pipeline reference below.
-
 ### 7.9. Predictor Notebook
 
 TODO
 
 ### 7.10. Model Registry
 
-TODO
+After an AutoML pipeline run completes, you can register the trained model in RHOAI Model Registry and then deploy it. You need the full S3 path to the model artifact (e.g. `predictor.pkl`) before registering.
+
+**Get the artifact path from the finished pipeline**
+
+1. Open the completed run in AI Pipelines (or the UI you use to view pipeline runs).
+2. Go to **Run details** → **Artifacts** (or the artifact store configured for the run).
+3. In the artifact list, locate the **predictor** artifact — the one that corresponds to the model you want to register (e.g. the best model from the leaderboard). It is typically named or grouped under the step that writes the refitted predictor (e.g. `predictor.pkl` or similar).
+4. Copy the **full artifact path**: bucket, prefix, and object key that point to that predictor file. You will need this path when registering the model.
+
+**Register the model in RHOAI**
+
+1. In the RHOAI UI, go to **AI Hub** → **Registry** → **Register model**.
+2. Provide:
+   - **Model name** and **Version name** (e.g. `churn-predictor` and `v1`).
+   - **S3 endpoint**, **bucket**, and **path** — use the full path to the predictor artifact you copied (e.g. the path to `predictor.pkl`).
+3. Click **Register model** and wait until registration completes successfully.
+
+**Deploy the registered model**
+
+1. After the model is registered, go to **Actions** → **Deploy** and select the version you specified (e.g. `v1`).
+2. Click the registered model you just created.
+3. Choose the **project** where you want to deploy.
+4. Before following the deployment steps in the UI, **create an Inference Service** (if you have not already). For how to create it, see section **7.11. Model Deployment (KServe — Autogluon ensemble on Red Hat OpenShift AI)** — the steps there describe creating a Serving Runtime and deploying the model. Then complete the deployment flow as described in the UI; the steps will guide you through deploying the model using that inference service.
+
+For deployment details and options (e.g. KServe, serving runtime), see section **7.11. Model Deployment (KServe — Autogluon ensemble on Red Hat OpenShift AI)**.
 
 ### 7.11. Model Deployment (KServe — Autogluon ensemble on Red Hat OpenShift AI)
 
@@ -388,6 +410,8 @@ Create a YAML file for the KServe Serving Runtime. Set `metadata.namespace` to y
 
 - **Path A (Quay):** `quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest`
 - **Path B (build on cluster):** `image-registry.openshift-image-registry.svc:5000/<namespace>/autogluonkserveimagev1:latest` (use the same namespace as above)
+
+Use one of these values for `{SERVING_IMAGE}` in the YAML below.
 
 ```yaml
 apiVersion: serving.kserve.io/v1alpha1
