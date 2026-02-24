@@ -11,6 +11,7 @@
 ### 1.1. What AutoML gives you
 
 AutoML takes care of the full workflow so you can focus on your use case:
+
 - **Automated data preprocessing** — Your tabular data (CSV in S3) is loaded, sampled and split into train and test sets.
 - **Automated feature engineering and training** — AutoML trains many model types (neural networks, tree-based, linear) using [AutoGluon](https://github.com/autogluon/autogluon)’s ensembling (stacking and bagging), then selects the top performers and refits them on the full dataset for production-ready predictors.
 - **Leaderboard** — You get an HTML leaderboard ranking all top models by the right metric for your task (e.g., accuracy or ROC-AUC for classification, R² for regression), so you can compare and pick the best model.
@@ -22,17 +23,18 @@ You run AutoML programmatically via the pipelines API or using AI Pipelines UI; 
 
 In this preview, AutoML supports **classification** (binary and multiclass) and **regression** for tabular data. You specify the task type and the label column; AutoML handles the rest.
 
-| Area | Support |
-|------|--------|
-| **Data format** | CSV (tabular) |
-| **Data source** | S3-compatible object storage (via RHOAI Connections) |
-| **Task types** | Classification (binary, multiclass), regression |
-| **Training** | AutoGluon (ensembling: stacking, bagging); automatic model selection and refit on full data |
-| **What you get** | Trained model artifacts, HTML leaderboard, generated notebook |
-| **How you run it** | AI Pipelines UI, API (programmatic) |
+
+| Area               | Support                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| **Data format**    | CSV (tabular)                                                                               |
+| **Data source**    | S3-compatible object storage (via RHOAI Connections)                                        |
+| **Task types**     | Classification (binary, multiclass), regression                                             |
+| **Training**       | AutoGluon (ensembling: stacking, bagging); automatic model selection and refit on full data |
+| **What you get**   | Trained model artifacts, HTML leaderboard, generated notebook                               |
+| **How you run it** | AI Pipelines UI, API (programmatic)                                                         |
+
 
 You can register and serve the models AutoML produces using RHOAI Model Registry and KServe separately. **Not in scope:** Non-tabular data (e.g., images, text), traditional hyperparameter tuning as the primary method, unsupervised learning.
-
 
 ### 1.3. How it works under the hood
 
@@ -46,18 +48,21 @@ To run AutoML, you provide where your data is and what to predict.
 
 ### Required input parameters
 
-| Parameter | Description |
-|-----------|-------------|
+
+| Parameter         | Description                                                                                                                                               |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Data location** | An S3 connection (RHOAI Connections) and the bucket name and path (key) of your CSV file. AutoML uses the connection’s Kubernetes secret for credentials. |
-| **Label column** | The name of the column you want to predict (target). |
-| **Task type** | `binary` or `multiclass` for classification, or `regression` for regression. |
+| **Label column**  | The name of the column you want to predict (target).                                                                                                      |
+| **Task type**     | `binary` or `multiclass` for classification, or `regression` for regression.                                                                              |
 
 
 ### Optional input parameters
 
-| Parameter | Default | Description |
-|-----------|--------|-------------|
-| **top_n** | `3` | How many top models to refit on the full dataset (and appear on the leaderboard). |
+
+| Parameter | Default | Description                                                                       |
+| --------- | ------- | --------------------------------------------------------------------------------- |
+| **top_n** | `3`     | How many top models to refit on the full dataset (and appear on the leaderboard). |
+
 
 ---
 
@@ -79,11 +84,13 @@ AutoML lets you tackle common tabular use cases by providing a CSV and the colum
 
 A typical scenario is **predicting customer churn**: you have a table of customers (contract details, usage, demographics) and a column indicating who left. AutoML trains multiple models to predict that column, then gives you a leaderboard so you can pick the best predictor and use it to flag at-risk customers or drive retention.
 
-| Scenario | Your data | You predict | Outcome |
-|----------|-----------|--------------|---------|
-| **Customer churn** | Customer attributes, tenure, charges | Will the customer churn? (Yes/No) | Leaderboard + best model; use it to target retention. |
-| **Fraud or risk** | Transaction or account features | Is it fraudulent / high risk? | Ranked models; deploy the best for real-time scoring. |
-| **Regression** | Property or product features | Price, demand, or other numeric target | Best regression model and metrics (e.g. R²). |
+
+| Scenario           | Your data                            | You predict                            | Outcome                                               |
+| ------------------ | ------------------------------------ | -------------------------------------- | ----------------------------------------------------- |
+| **Customer churn** | Customer attributes, tenure, charges | Will the customer churn? (Yes/No)      | Leaderboard + best model; use it to target retention. |
+| **Fraud or risk**  | Transaction or account features      | Is it fraudulent / high risk?          | Ranked models; deploy the best for real-time scoring. |
+| **Regression**     | Property or product features         | Price, demand, or other numeric target | Best regression model and metrics (e.g. R²).          |
+
 
 To try this yourself, follow the [Tutorial: Predict the Customer Churn](#9-tutorial-predict-the-customer-churn): step-by-step with the Telco Customer Churn dataset on Red Hat OpenShift AI.
 
@@ -94,7 +101,6 @@ To try this yourself, follow the [Tutorial: Predict the Customer Churn](#9-tutor
 - Red Hat OpenShift AI installed and accessible, with Kubeflow Pipelines available (see [References](#10-references) for version).
 - A **data science project** and a **Pipeline Server** configured with object storage for runs and artifacts.
 - An **S3 connection** (RHOAI Connections) for your training data so AutoML can read your CSV.
-
 
 ---
 
@@ -126,11 +132,11 @@ You need an S3-compatible connection for pipeline **results** (artifacts, leader
 2. Select **S3 compatible object storage** as the connection type.
 3. Enter a unique **name** for the connection (for example, `automl-results-s3`). A resource name is generated automatically.
 4. Fill in the connection details:
-   - **Endpoint** — Your S3-compatible bucket endpoint (use the format required by your provider).
-   - **Bucket** — Name of the bucket for pipeline results and Pipeline Server artifacts.
-   - **Region** — Default region for your S3 account.
-   - **Access key** — Access key ID for your S3 provider.
-   - **Secret key** — Secret access key for your S3 account.
+  - **Endpoint** — Your S3-compatible bucket endpoint (use the format required by your provider).
+  - **Bucket** — Name of the bucket for pipeline results and Pipeline Server artifacts.
+  - **Region** — Default region for your S3 account.
+  - **Access key** — Access key ID for your S3 provider.
+  - **Secret key** — Secret access key for your S3 account.
 5. Click **Create**.
 
 Use this connection when configuring the Pipeline Server (e.g., in **Pipeline runtimes** or project settings) so the server stores pipeline runs and artifacts in this bucket. For exact UI steps and endpoint formatting, see [Using connections](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.22/html/working_on_data_science_projects/using-connections_projects) and [Creating an S3 client](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.13/html/working_with_data_in_an_s3-compatible_object_store/creating-an-s3-client_s3) in the Red Hat OpenShift AI documentation.
@@ -149,7 +155,7 @@ Create a second connection that points to the bucket where you will store the **
 1. In the same project, go to **Connections** and click **Add connection**.
 2. Select **S3 compatible object storage**.
 3. Enter a unique name (for example, `customer-churn-data-s3`) and complete:
-   - **Endpoint**, **Bucket**, **Region**, **Access key**, **Secret key** for the bucket you will use for training data.
+  - **Endpoint**, **Bucket**, **Region**, **Access key**, **Secret key** for the bucket you will use for training data.
 4. Click **Create**.
 
 Note the connection **name** (resource name); you will use it as `train_data_secret_name` when creating the pipeline run.
@@ -171,17 +177,16 @@ Note the connection **name** (resource name); you will use it as `train_data_sec
 1. From **Pipelines**, create a new **Pipeline Run** for the AutoML pipeline you added.
 2. Set the run parameters as follows (see Section 4 for what each means):
 
-   | Parameter | Value |
-   |-----------|--------|
-   | **train_data_secret_name** | The connection (resource) name you created for training data in step 7.4 |
-   | **train_data_bucket_name** | The bucket name where you uploaded the CSV in step 7.5 |
-   | **train_data_file_key** | The object key (path) of the file, e.g. `data/WA_FnUseC_TelcoCustomerChurn.csv` or `WA_FnUseC_TelcoCustomerChurn.csv` |
-   | **label_column** | `Churn` |
-   | **task_type** | `binary` |
-   | **top_n** (optional) | `3` (default) or another positive integer |
+  | Parameter                  | Value                                                                                                                 |
+  | -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+  | **train_data_secret_name** | The connection (resource) name you created for training data in step 7.4                                              |
+  | **train_data_bucket_name** | The bucket name where you uploaded the CSV in step 7.5                                                                |
+  | **train_data_file_key**    | The object key (path) of the file, e.g. `data/WA_FnUseC_TelcoCustomerChurn.csv` or `WA_FnUseC_TelcoCustomerChurn.csv` |
+  | **label_column**           | `Churn`                                                                                                               |
+  | **task_type**              | `binary`                                                                                                              |
+  | **top_n** (optional)       | `3` (default) or another positive integer                                                                             |
 
    If the UI asks for an experiment or run name (e.g. “Customer Churn”, “Customer Churn Prediction”), set them as run metadata; AutoML uses the parameters in the table above.
-
 3. Ensure the Pipeline Server is configured with the results S3 connection from 7.2 so artifacts are stored in the expected bucket.
 4. Start the run and wait for it to complete.
 
@@ -196,11 +201,12 @@ After the run has completed successfully:
 For exact artifact paths and layout, see the pipeline reference below.
 
 ### 7.9. Predictor Notebook
+
 TODO
 
 ### 7.10. Model Registry
-TODO
 
+TODO
 
 ### 7.11. Model Deployment (KServe — Autogluon ensemble on Red Hat OpenShift AI)
 
@@ -305,24 +311,19 @@ ENTRYPOINT ["python", "-m", "autogluonserver"]
 ```
 
 1. **Build the Docker image** from the root of the cloned [KServe repository](https://github.com/LukaszCmielowski/kserve) (where `python/autogluon.Dockerfile` and the `kserve`, `storage`, and `autogluonserver` directories exist). Use `-t` with the full image URL so you can push without a separate tag step. Run:
-
-   ```bash
+  ```bash
    nerdctl -n k8s.io build -f python/autogluon.Dockerfile -t quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest .
-   ```
-
+  ```
    Replace `quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest` with your registry and image name. Alternatively, use `docker build` with the same `-f` and `-t` values.
-
 2. **Push the image** to your container registry:
-
-   ```bash
+  ```bash
    nerdctl -n k8s.io push quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest
-   ```
-
+  ```
    Use the same image URL in the ServingRuntime YAML in the next section (`PATH_TO_YOUR_QUAY_IMAGE`).
 
 #### Path B: Build image directly on Red Hat OpenShift AI
 
-When you build the image on the cluster instead of pulling it from Quay, use the OpenShift Builds flow and then a Serving Runtime that points to the internal image registry. Use the same project/namespace for the build and for the Serving Runtime (e.g. `automl-project`).
+When you build the image on the cluster instead of pulling it from external container image registry, use the OpenShift Builds flow and then a Serving Runtime that points to the internal image registry. Use the same project/namespace for the build and for the Serving Runtime (e.g. `automl-project`).
 
 **1. Create ImageStream**
 
@@ -334,7 +335,10 @@ apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
   name: autogluonkserveimagev1
+  namespace: <your-namespace>
 ```
+
+Replace `<your-namespace>` with your OpenShift project/namespace (e.g. `automl-project`).
 
 **2. Create BuildConfig**
 
@@ -346,6 +350,7 @@ apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
   name: autogluonkserveimagev1
+  namespace: <your-namespace>
 spec:
   source:
     type: Git
@@ -365,7 +370,9 @@ spec:
     - type: ConfigChange
 ```
 
-OpenShift will start a build. Wait for the build to complete (e.g. in **Builds** → **Builds**). The image will be available in the internal registry as `image-registry.openshift-image-registry.svc:5000/<namespace>/autogluonkserveimagev1:latest` (use your project namespace, e.g. `automl-project`).
+Use the same `<your-namespace>` as for the ImageStream above.
+
+OpenShift will start a build. Wait for the build to complete (e.g. in **Builds** → **Builds**) and ensure the build status is **Complete**. The image will be available in the internal registry as `image-registry.openshift-image-registry.svc:5000/<namespace>/autogluonkserveimagev1:latest` (use your project namespace, e.g. `automl-project`).
 
 After the image is built, follow the **Common steps** below; for Path B use the **Serving Runtime YAML for cluster-built image** and you can skip adding image-pull credentials for that image.
 
@@ -453,7 +460,7 @@ Then attach the secret to the service account used by the runtime:
 
 This assumes your Autogluon model (e.g. from an AutoML run) is stored in S3.
 
-1. In the left menu: **AI hub** → **Deployments** → **Deploy model**.
+1. In the left menu: **AI hub** → **Deployments** → **Deploy model**
 2. Under **Model location**, choose **S3 object storage**.
 3. Create a new connection or use an existing one and fill in the S3 credentials and path to the model.
 4. Fill in all required fields (bucket, path, etc.).
@@ -473,3 +480,4 @@ After the deployment is created, you can use the deployed endpoint for inference
 - [AutoGluon](https://github.com/autogluon/autogluon) — AutoML engine used for training and ensembling
 - [Deploying models on the single-model serving platform (Red Hat OpenShift AI)](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_cloud_service/1/html/deploying_models/deploying_models_on_the_single_model_serving_platform) — register and serve models after AutoML
 - [AutoGluon tabular training pipeline (pipelines-components, branch rhoai_automl)](https://github.com/LukaszCmielowski/pipelines-components/tree/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline) — implementation reference (pipeline source, parameters, KFP version)
+
