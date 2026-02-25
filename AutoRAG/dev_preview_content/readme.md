@@ -1,6 +1,6 @@
 # AutoRAG (Technology Preview)
 
-**AutoRAG** on Red Hat OpenShift AI lets you run and evaluate **Retrieval-Augmented Generation (RAG)** over your documents from a **notebook** in the workbench. You provide documents and test questions; the notebook drives execution (using [IBM ai4rag](https://github.com/IBM/ai4rag)-style workflows) against a **Llama-stack RAG server** and lets you explore answers, retrieval, and metrics directly in the notebook. See [Example scenarios](#4-example-scenarios) for a typical use case and a step-by-step tutorial.
+**AutoRAG** on Red Hat OpenShift AI lets you run and evaluate **Retrieval-Augmented Generation (RAG)** over your documents from a **notebook** in the workbench. You provide documents and test questions; the notebook drives execution (using [IBM ai4rag](https://github.com/IBM/ai4rag)-style workflows) against a **Llama-stack RAG server** and lets you explore answers, retrieval, and metrics directly in the notebook. See [Example scenarios](#example-scenarios) for a typical use case and a step-by-step tutorial.
 
 **Status:** Technology Preview — This feature is not yet supported with Red Hat production service level agreements (SLAs) and may change. It provides early access for testing and feedback.
 
@@ -8,32 +8,32 @@
 
 ## Table of contents
 
-- [1. About AutoRAG](#1-about-autorag)
-  - [1.1. What AutoRAG gives you](#11-what-autorag-gives-you)
-  - [1.2. What AutoRAG supports (Technology Preview)](#12-what-autorag-supports-technology-preview)
-  - [1.3. How it works under the hood](#13-how-it-works-under-the-hood)
-  - [1.4. Sample notebook and experiment flow (ai4rag)](#14-sample-notebook-and-experiment-flow-ai4rag)
-- [2. What you need to provide](#2-what-you-need-to-provide)
+- [About AutoRAG](#about-autorag)
+  - [What AutoRAG gives you](#what-autorag-gives-you)
+  - [What AutoRAG supports (Technology Preview)](#what-autorag-supports-technology-preview)
+  - [How it works under the hood](#how-it-works-under-the-hood)
+  - [Sample notebook and experiment flow (ai4rag)](#sample-notebook-and-experiment-flow-ai4rag)
+- [What you need to provide](#what-you-need-to-provide)
   - [Required](#required)
   - [Optional](#optional)
-- [3. What you get from a run](#3-what-you-get-from-a-run)
-- [4. Example scenarios](#4-example-scenarios)
-- [5. Prerequisites](#5-prerequisites)
-- [6. Running AutoRAG](#6-running-autorag)
-- [7. Tutorial: Ask questions against 2025 IBM financial reports](#7-tutorial-ask-questions-against-2025-ibm-financial-reports)
-  - [7.1. Create a project and workbench](#71-create-a-project-and-workbench)
-  - [7.2. Deploy Llama-stack server with RAG stack](#72-deploy-llama-stack-server-with-rag-stack)
-  - [7.3. Create S3 connection and upload documents](#73-create-s3-connection-and-upload-documents)
-  - [7.4. Attach S3 connection to the workbench](#74-attach-s3-connection-to-the-workbench)
-  - [7.5. Open and configure the AutoRAG notebook](#75-open-and-configure-the-autorag-notebook)
-  - [7.6. Run the notebook and explore results](#76-run-the-notebook-and-explore-results)
+- [What you get from a run](#what-you-get-from-a-run)
+- [Example scenarios](#example-scenarios)
+- [Prerequisites](#prerequisites)
+- [Running AutoRAG](#running-autorag)
+- [Tutorial: Ask questions against 2025 IBM financial reports](#tutorial-ask-questions-against-2025-ibm-financial-reports)
+  - [Create a project and workbench](#create-a-project-and-workbench)
+  - [Deploy Llama-stack server with RAG stack](#deploy-llama-stack-server-with-rag-stack)
+  - [Create S3 connection and upload documents](#create-s3-connection-and-upload-documents)
+  - [Attach S3 connection to the workbench](#attach-s3-connection-to-the-workbench)
+  - [Open and configure the AutoRAG notebook](#open-and-configure-the-autorag-notebook)
+  - [Run the notebook and explore results](#run-the-notebook-and-explore-results)
 - [References](#references)
 
 ---
 
-## 1. About AutoRAG
+## About AutoRAG
 
-### 1.1. What AutoRAG gives you
+### What AutoRAG gives you
 
 AutoRAG in this preview is **notebook-driven**: you run a notebook in an OpenShift AI workbench that executes RAG against your documents and a prepared RAG stack.
 
@@ -44,7 +44,7 @@ AutoRAG in this preview is **notebook-driven**: you run a notebook in an OpenShi
 
 You do not need to deploy the RAG application yourself for this flow; the notebook orchestrates runs against the existing RAG stack and lets you inspect outcomes.
 
-### 1.2. What AutoRAG supports (Technology Preview)
+### What AutoRAG supports (Technology Preview)
 
 In this preview, AutoRAG is exposed as a **workbench notebook** that uses IBM ai4rag-style execution against Red Hat OpenShift AI’s Llama-stack RAG infrastructure.
 
@@ -58,11 +58,11 @@ In this preview, AutoRAG is exposed as a **workbench notebook** that uses IBM ai
 
 **Not in scope (this preview):** Fully automated RAG pipeline runs (e.g. via Kubeflow Pipelines).
 
-### 1.3. How it works under the hood
+### How it works under the hood
 
 The notebook runs in your **workbench** and uses **RHOAI Connections** to read documents and test data from S3. It calls the **Llama-stack RAG server** (deployed as a prerequisite in your project; see [Llama stack setup](../../llamastack/SETUP.md)) for embeddings, retrieval, and LLM responses. The flow follows patterns similar to [IBM ai4rag](https://github.com/IBM/ai4rag): ingest documents, run queries from test data, and evaluate results. Implementation details depend on the notebook and the RAG stack configuration (see [References](#references)).
 
-### 1.4. Sample notebook and experiment flow (ai4rag)
+### Sample notebook and experiment flow (ai4rag)
 
 The scenario is based on the [IBM ai4rag](https://github.com/IBM/ai4rag) sample notebook and experiment script. In that pattern:
 
@@ -77,7 +77,7 @@ For the exact cells and code, see the [run_ai4rag.ipynb](https://github.com/IBM/
 
 ---
 
-## 2. What you need to provide
+## What you need to provide
 
 To run the AutoRAG notebook, you provide:
 
@@ -98,7 +98,7 @@ To run the AutoRAG notebook, you provide:
 
 ---
 
-## 3. What you get from a run
+## What you get from a run
 
 When you run the AutoRAG notebook:
 
@@ -112,7 +112,7 @@ All outcomes are explored **inside the notebook** (tables, markdown, or plots as
 
 ---
 
-## 4. Example scenarios
+## Example scenarios
 
 AutoRAG in this preview is aimed at **document Q&A and evaluation**: you have a set of documents (e.g. reports, manuals) and a list of questions; you run the notebook to get answers and inspect retrieval and quality.
 
@@ -122,11 +122,11 @@ AutoRAG in this preview is aimed at **document Q&A and evaluation**: you have a 
 | **Internal docs Q&A** | Policy or product docs in S3; test questions in JSON | Same flow | Inspect answers and retrieval for each question in the notebook. |
 | **Evaluation run** | Documents + test set with expected answers | Run notebook | Compare model answers to references and review metrics in the notebook. |
 
-To try this yourself, follow the [Tutorial: Ask questions against 2025 IBM financial reports](#7-tutorial-ask-questions-against-2025-ibm-financial-reports): download the reports from [IBM Financial Reporting](https://www.ibm.com/investor/financial-reporting), upload IBM 2025 quarterly reports and `test_data.json` to S3, ensure the [Llama stack is set up](../../llamastack/SETUP.md) and the RAG stack is ready, run the notebook, and explore the results.
+To try this yourself, follow the [Tutorial: Ask questions against 2025 IBM financial reports](#tutorial-ask-questions-against-2025-ibm-financial-reports): download the reports from [IBM Financial Reporting](https://www.ibm.com/investor/financial-reporting), upload IBM 2025 quarterly reports and `test_data.json` to S3, ensure the [Llama stack is set up](../../llamastack/SETUP.md) and the RAG stack is ready, run the notebook, and explore the results.
 
 ---
 
-## 5. Prerequisites
+## Prerequisites
 
 - **Llama stack** set up — See [Llama stack setup](../../llamastack/SETUP.md) for installation and configuration.
 - **Red Hat OpenShift AI** installed and accessible.
@@ -139,7 +139,7 @@ To try this yourself, follow the [Tutorial: Ask questions against 2025 IBM finan
 
 ---
 
-## 6. Running AutoRAG
+## Running AutoRAG
 
 You run AutoRAG by **running the notebook** in your workbench:
 
@@ -153,13 +153,13 @@ There is no separate “AutoRAG pipeline run” in this preview; execution is en
 
 ---
 
-## 7. Tutorial: Ask questions against 2025 IBM financial reports
+## Tutorial: Ask questions against 2025 IBM financial reports
 
 **Scenario:** You have **IBM financial reports from 2025** (one document per quarter) and a **test_data.json** file with questions about them. The goal is to run a RAG workflow from a notebook in OpenShift AI (using ai4rag-style execution) against a **Llama-stack RAG server**, then explore answers and retrieval results in the notebook.
 
 This tutorial walks you through: creating a project and workbench, preparing S3 with the documents and test data, ensuring the [Llama stack is set up](../../llamastack/SETUP.md) and the RAG stack is deployed, running the AutoRAG notebook, and exploring the results in the notebook.
 
-### 7.1. 🏗️ Create a project and workbench
+### 🏗️ Create a project and workbench
 
 | Step | Action |
 |------|--------|
@@ -167,14 +167,14 @@ This tutorial walks you through: creating a project and workbench, preparing S3 
 | **②** | Go to **Data science projects** and create a new project (e.g. `ibm-reports-rag`). |
 | **③** | Create a **workbench** (notebook environment) in the project. Choose an image that includes the dependencies required by the AutoRAG notebook (e.g. Python, ai4rag-related libraries if used). For full steps, see [Creating a project and workbench](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.8/html/getting_started_with_red_hat_openshift_ai_self-managed/creating-a-project-workbench_get-started). |
 
-### 7.2. 🚀 Deploy Llama-stack server with RAG stack
+### 🚀 Deploy Llama-stack server with RAG stack
 
 | Step | Action |
 |------|--------|
 | **①** | In the project, deploy a **Llama-stack server** with the **RAG stack** enabled (chat model, embedding model, vector store such as Milvus). Follow [Llama stack setup](../../llamastack/SETUP.md) for installation and configuration; see also [Deploying a RAG stack in a project](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.0/html/working_with_llama_stack/deploying-a-rag-stack-in-a-project_rag). |
 | **②** | Note the RAG/API endpoint and any credentials the notebook will need to call the stack. |
 
-### 7.3. 📦 Create S3 connection and upload documents
+### 📦 Create S3 connection and upload documents
 
 | Step | Action |
 |------|--------|
@@ -184,23 +184,23 @@ This tutorial walks you through: creating a project and workbench, preparing S3 
 | **④** | Upload the **benchmark JSON** (e.g. `benchmark.json` or `test_data.json`) to the same bucket. The file must be a JSON array of objects with `question`, `correct_answers` (array of strings), and `correct_answer_document_ids` (array of document filenames/IDs that contain the answer). Example: `[{"question": "What was IBM's revenue in Q1 2024?", "correct_answers": ["Revenue of $14.5 billion..."], "correct_answer_document_ids": ["ibm-1q24-earnings-press-release.pdf"]}]`. |
 | **⑤** | Note the **bucket name** and **object keys** (paths) for the documents and for `test_data.json`; you will set these in the notebook if required. |
 
-### 7.4. 🔗 Attach S3 connection to the workbench
+### 🔗 Attach S3 connection to the workbench
 
 | Step | Action |
 |------|--------|
 | **①** | Open **Workbenches**, edit your workbench, and **attach the S3 connection** you created in 7.3 so the notebook can read from the bucket. |
 | **②** | Save and restart the workbench if prompted. |
 
-### 7.5. 📓 Open and configure the AutoRAG notebook
+### 📓 Open and configure the AutoRAG notebook
 
 | Step | Action |
 |------|--------|
 | **①** | Upload or clone the **AutoRAG notebook** into the workbench: [run_ai4rag.ipynb](https://github.com/IBM/ai4rag/blob/dev-samples/samples/run_ai4rag.ipynb) (ai4rag `dev-samples` branch). The notebook installs data-processing components from `pipelines-components` (branch `rhoai_autorag_data_processing_pipeline`): test data loader, documents sampling, and text extraction (Docling). |
 | **②** | Set **S3 credentials** in the notebook (or via env): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_ENDPOINT`. Set **bucket name** and **object keys** for the documents prefix and for the benchmark file (e.g. `benchmark.json`). |
-| **③** | Set the **Llama-stack client** URL and API key: `LLAMA_STACK_CLIENT_BASE_URL` and `LLAMA_STACK_CLIENT_API_KEY` (or set them in the notebook for `LlamaStackClient(base_url=..., api_key=...)`). Use the URL of the Llama-stack RAG server you deployed in [7.2](#72-deploy-llama-stack-server-with-rag-stack) (see [Llama stack setup](../../llamastack/SETUP.md) if you have not deployed it yet). |
+| **③** | Set the **Llama-stack client** URL and API key: `LLAMA_STACK_CLIENT_BASE_URL` and `LLAMA_STACK_CLIENT_API_KEY` (or set them in the notebook for `LlamaStackClient(base_url=..., api_key=...)`). Use the URL of the Llama-stack RAG server you deployed in [Deploy Llama-stack server with RAG stack](#deploy-llama-stack-server-with-rag-stack) (see [Llama stack setup](../../llamastack/SETUP.md) if you have not deployed it yet). |
 | **④** | Ensure the benchmark JSON format matches: list of objects with `question`, `correct_answers`, and `correct_answer_document_ids`. Extracted documents must have metadata `document_id` matching those IDs (e.g. stem of the filename). |
 
-### 7.6. ▶️ Run the notebook and explore results
+### ▶️ Run the notebook and explore results
 
 | Step | Action |
 |------|--------|
