@@ -510,6 +510,40 @@ To call the model from outside OpenShift (e.g. from your laptop or another servi
 5. Click **Next** → **Update deployment**.
 6. Start the deployment again, then return to **AI hub** → **Deployments** and open your deployment.
 7. When the deployment is running, under **Inference endpoint** you will see **Internal** and **External**. Click the external endpoint to copy the external URL and use it for inference from outside the cluster.
+8. Test the deployed model with a request using the URL copied in the previous step:
+
+   ```bash
+   curl -X POST \
+   "<PASTE_EXTERNAL_URL_COPIED_IN_STEP_7>" \
+   -H "Content-Type: application/json" \
+   -d '{
+     "instances": [
+       {
+         "gender": [1],
+         "SeniorCitizen": [0],
+         "Partner": [1],
+         "Dependents": [0],
+         "tenure": [12],
+         "PhoneService": [1],
+         "MultipleLines": ["No"],
+         "InternetService": ["Fiber optic"],
+         "OnlineSecurity": ["No"],
+         "OnlineBackup": ["Yes"],
+         "DeviceProtection": ["No"],
+         "TechSupport": ["No"],
+         "StreamingTV": ["Yes"],
+         "StreamingMovies": ["No"],
+         "Contract": ["Month-to-month"],
+         "PaperlessBilling": [1],
+         "PaymentMethod": ["Electronic check"],
+         "MonthlyCharges": [70.35],
+         "TotalCharges": [800.40]
+       }
+     ]
+   }'
+   ```
+
+   Reference for more info about v1 protocol: [KServe V1 Protocol](https://kserve.github.io/website/docs/concepts/architecture/data-plane/v1-protocol)
 
 ---
 
@@ -517,6 +551,7 @@ To call the model from outside OpenShift (e.g. from your laptop or another servi
 
 - [KServe (LukaszCmielowski/kserve)](https://github.com/LukaszCmielowski/kserve) — repository containing the Dockerfile (`python/autogluon.Dockerfile`) and directories (`kserve`, `storage`, `autogluonserver`, `third_party`) required to build the Autogluon serving image for Model Deployment (Section 7.11)
 - [AutoGluon](https://github.com/autogluon/autogluon) — AutoML engine used for training and ensembling
+- [KServe V1 Protocol](https://kserve.github.io/website/docs/concepts/architecture/data-plane/v1-protocol) — request/response format and endpoints for `/v1/models/{model_name}:predict`
 - [Deploying models on the single-model serving platform (Red Hat OpenShift AI)](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_cloud_service/1/html/deploying_models/deploying_models_on_the_single_model_serving_platform) — register and serve models after AutoML
 - [AutoGluon tabular training pipeline (pipelines-components, branch rhoai_automl)](https://github.com/LukaszCmielowski/pipelines-components/tree/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline) — implementation reference (pipeline source, parameters, KFP version)
 
