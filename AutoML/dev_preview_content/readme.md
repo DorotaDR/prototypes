@@ -6,6 +6,38 @@
 
 ---
 
+## Table of contents
+
+- [1. About AutoML](#1-about-automl)
+  - [1.1. What AutoML gives you](#11-what-automl-gives-you)
+  - [1.2. What AutoML supports (Technology Preview)](#12-what-automl-supports-technology-preview)
+  - [1.3. How it works under the hood](#13-how-it-works-under-the-hood)
+- [2. What you need to provide](#2-what-you-need-to-provide)
+  - [Required input parameters](#required-input-parameters)
+  - [Optional input parameters](#optional-input-parameters)
+- [3. What you get from a run](#3-what-you-get-from-a-run)
+- [4. Example scenarios](#4-example-scenarios)
+- [5. Prerequisites](#5-prerequisites)
+- [6. Running AutoML](#6-running-automl)
+- [7. Tutorial: Predict the Customer Churn](#7-tutorial-predict-the-customer-churn)
+  - [7.1. Create a new project and workbench](#71-create-a-new-project-and-workbench)
+  - [7.2. Create the S3 connection for results storage](#72-create-the-s3-connection-for-results-storage)
+  - [7.3. Attach the connection to the workbench](#73-attach-the-connection-to-the-workbench)
+  - [7.4. Create an S3 connection for training data](#74-create-an-s3-connection-for-training-data)
+  - [7.5. Upload the training dataset to S3](#75-upload-the-training-dataset-to-s3)
+  - [7.6. Add the AutoML pipeline as a Pipeline Definition](#76-add-the-automl-pipeline-as-a-pipeline-definition)
+  - [7.7. Run AutoML with the required inputs](#77-run-automl-with-the-required-inputs)
+  - [7.8. View the leaderboard](#78-view-the-leaderboard)
+  - [7.9. Predictor Notebook](#79-predictor-notebook)
+  - [7.10. Model Registry](#710-model-registry)
+  - [7.11. Model Deployment (KServe — Autogluon ensemble on Red Hat OpenShift AI)](#711-model-deployment-kserve--autogluon-ensemble-on-red-hat-openshift-ai)
+    - [Path A: Build image locally and push to a container registry](#path-a-build-image-locally-and-push-to-a-container-registry)
+    - [Path B: Build image directly on Red Hat OpenShift AI](#path-b-build-image-directly-on-red-hat-openshift-ai)
+    - [Common steps (after the image is in a registry or built on cluster)](#common-steps-after-the-image-is-in-a-registry-or-built-on-cluster)
+- [References](#references)
+
+---
+
 ## 1. About AutoML
 
 ### 1.1. What AutoML gives you
@@ -113,97 +145,133 @@ When the run finishes, open the run’s artifacts to get the leaderboard, traine
 
 This tutorial walks you through that end-to-end: create a project and workbench in Red Hat OpenShift AI, configure S3 connections for results and training data, add the AutoML pipeline and dataset, run AutoML with the right settings, and view the leaderboard to pick the best model.
 
-### 7.1. Create a new project and workbench
+### 7.1. 🏗️ Create a new project and workbench
 
-1. Log in to Red Hat OpenShift AI.
-2. From the OpenShift AI dashboard, go to **Data science projects** and create a new data science project (for example, `customer-churn-ml`).
-3. In the project, create a **workbench** (notebook environment). Choose an image and resource size as needed. For full steps, see [Creating a project and workbench](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.8/html/getting_started_with_red_hat_openshift_ai_self-managed/creating-a-project-workbench_get-started) in the Red Hat OpenShift AI documentation.
+| Step | Action |
+|------|--------|
+| **①** | Log in to Red Hat OpenShift AI. |
+| **②** | From the OpenShift AI dashboard, go to **Data science projects** and create a new data science project (for example, `customer-churn-ml`). |
+| **③** | In the project, create a **workbench** (notebook environment). Choose an image and resource size as needed. For full steps, see [Creating a project and workbench](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.8/html/getting_started_with_red_hat_openshift_ai_self-managed/creating-a-project-workbench_get-started) in the Red Hat OpenShift AI documentation. |
 
-### 7.2. Create the S3 connection for results storage
+### 7.2. 💾 Create the S3 connection for results storage
 
 You need an S3-compatible connection for pipeline **results** (artifacts, leaderboard, etc.). Use this same connection when you configure the **Pipeline Server** for the project so that pipeline runs can read and write to the same bucket.
 
-1. In your project, open the **Connections** tab and click **Add connection**.
-2. Select **S3 compatible object storage** as the connection type.
-3. Enter a unique **name** for the connection (for example, `automl-results-s3`). A resource name is generated automatically.
-4. Fill in the connection details:
-   - **Endpoint** — Your S3-compatible bucket endpoint (use the format required by your provider).
-   - **Bucket** — Name of the bucket for pipeline results and Pipeline Server artifacts.
-   - **Region** — Default region for your S3 account.
-   - **Access key** — Access key ID for your S3 provider.
-   - **Secret key** — Secret access key for your S3 account.
-5. Click **Create**.
+| Step | Action |
+|------|--------|
+| **①** | In your project, open the **Connections** tab and click **Add connection**. |
+| **②** | Select **S3 compatible object storage** as the connection type. |
+| **③** | Enter a unique **name** for the connection (for example, `automl-results-s3`). A resource name is generated automatically. |
+| **④** | Fill in the connection details: **Endpoint** (S3-compatible bucket endpoint), **Bucket** (for pipeline results and Pipeline Server artifacts), **Region**, **Access key**, **Secret key**. |
+| **⑤** | Click **Create**. |
 
 Use this connection when configuring the Pipeline Server (e.g., in **Pipeline runtimes** or project settings) so the server stores pipeline runs and artifacts in this bucket. For exact UI steps and endpoint formatting, see [Using connections](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.22/html/working_on_data_science_projects/using-connections_projects) and [Creating an S3 client](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.13/html/working_with_data_in_an_s3-compatible_object_store/creating-an-s3-client_s3) in the Red Hat OpenShift AI documentation.
 
-### 7.3. Attach the connection to the workbench
+### 7.3. 🔗 Attach the connection to the workbench
 
-1. Open your project and go to the **Workbenches** tab.
-2. For the workbench you created, use the action menu (⋮) and choose **Edit** (or the equivalent option to modify the workbench).
-3. In the workbench configuration, attach the **results** S3 connection you created in 7.2 so the workbench can access the same bucket (for example, to download leaderboard or artifacts later).
-4. Save and, if prompted, restart the workbench so the connection is applied.
+| Step | Action |
+|------|--------|
+| **①** | Open your project and go to the **Workbenches** tab. |
+| **②** | For the workbench you created, use the action menu (⋮) and choose **Edit** (or the equivalent option to modify the workbench). |
+| **③** | In the workbench configuration, attach the **results** S3 connection you created in 7.2 so the workbench can access the same bucket (for example, to download leaderboard or artifacts later). |
+| **④** | Save and, if prompted, restart the workbench so the connection is applied. |
 
-### 7.4. Create an S3 connection for training data
+### 7.4. 📦 Create an S3 connection for training data
 
 Create a second connection that points to the bucket where you will store the **training dataset** (Customer Churn CSV).
 
-1. In the same project, go to **Connections** and click **Add connection**.
-2. Select **S3 compatible object storage**.
-3. Enter a unique name (for example, `customer-churn-data-s3`) and complete:
-   - **Endpoint**, **Bucket**, **Region**, **Access key**, **Secret key** for the bucket you will use for training data.
-4. Click **Create**.
+| Step | Action |
+|------|--------|
+| **①** | In the same project, go to **Connections** and click **Add connection**. |
+| **②** | Select **S3 compatible object storage**. |
+| **③** | Enter a unique name (for example, `customer-churn-data-s3`) and complete **Endpoint**, **Bucket**, **Region**, **Access key**, **Secret key** for the bucket you will use for training data. |
+| **④** | Click **Create**. Note the connection **name** (resource name); you will use it as `train_data_secret_name` when creating the pipeline run. |
 
-Note the connection **name** (resource name); you will use it as `train_data_secret_name` when creating the pipeline run.
+### 7.5. ⬆️ Upload the training dataset to S3
 
-### 7.5. Upload the training dataset to S3
+| Step | Action |
+|------|--------|
+| **①** | Download the Customer Churn dataset: [WA_FnUseC_TelcoCustomerChurn.csv](https://github.com/IBM/watsonx-ai-samples/blob/master/cloud/data/customer_churn/WA_FnUseC_TelcoCustomerChurn.csv) (from the IBM watsonx AI samples repository). |
+| **②** | Upload the file to the S3 bucket configured in the **training data** connection (7.4). Place it in a path you will use as the object key (for example, `data/WA_FnUseC_TelcoCustomerChurn.csv` or just `WA_FnUseC_TelcoCustomerChurn.csv`). |
+| **③** | Note the **bucket name** and the **object key** (path) of the file; you will need them for `train_data_bucket_name` and `train_data_file_key` in the pipeline run. |
 
-1. Download the Customer Churn dataset: [WA_FnUseC_TelcoCustomerChurn.csv](https://github.com/IBM/watsonx-ai-samples/blob/master/cloud/data/customer_churn/WA_FnUseC_TelcoCustomerChurn.csv) (from the IBM watsonx AI samples repository).
-2. Upload the file to the S3 bucket configured in the **training data** connection (7.4). Place it in a path you will use as the object key (for example, `data/WA_FnUseC_TelcoCustomerChurn.csv` or just `WA_FnUseC_TelcoCustomerChurn.csv`).
-3. Note the **bucket name** and the **object key** (path) of the file; you will need them for `train_data_bucket_name` and `train_data_file_key` in the pipeline run.
+### 7.6. 📋 Add the AutoML pipeline as a Pipeline Definition
 
-### 7.6. Add the AutoML pipeline as a Pipeline Definition
+| Step | Action |
+|------|--------|
+| **①** | Get the compiled AutoML pipeline from the repository: [autogluon_tabular_training_pipeline](https://github.com/LukaszCmielowski/pipelines-components/tree/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline) (branch `rhoai_automl`). Build or download the compiled pipeline (e.g., the pipeline YAML/IR). |
+| **②** | In Red Hat OpenShift AI, go to **Pipelines** (or **Develop & Train** → **Pipelines**) for your project. |
+| **③** | Upload the compiled pipeline as a new **Pipeline Definition** (or create a pipeline from the YAML), following [Managing AI pipelines](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.0/html/working_with_ai_pipelines/managing-ai-pipelines_ai-pipelines). |
 
-1. Get the compiled AutoML pipeline from the repository: [autogluon_tabular_training_pipeline](https://github.com/LukaszCmielowski/pipelines-components/tree/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline) (branch `rhoai_automl`). Build or download the compiled pipeline (e.g., the pipeline YAML/IR).
-2. In Red Hat OpenShift AI, go to **Pipelines** (or **Develop & Train** → **Pipelines**) for your project.
-3. Upload the compiled pipeline as a new **Pipeline Definition** (or create a pipeline from the YAML), following [Managing AI pipelines](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.0/html/working_with_ai_pipelines/managing-ai-pipelines_ai-pipelines).
+### 7.7. ▶️ Run AutoML with the required inputs
 
-### 7.7. Run AutoML with the required inputs
+| Step | Action |
+|------|--------|
+| **①** | From **Pipelines**, create a new **Pipeline Run** for the AutoML pipeline you added. |
+| **②** | Set the run parameters (see Section 4 for what each means): **train_data_secret_name** (connection name from 7.4), **train_data_bucket_name** (bucket from 7.5), **train_data_file_key** (e.g. `data/WA_FnUseC_TelcoCustomerChurn.csv`), **label_column** `Churn`, **task_type** `binary`, **top_n** `3` (or another positive integer). If the UI asks for an experiment or run name, set them as run metadata. |
 
-1. From **Pipelines**, create a new **Pipeline Run** for the AutoML pipeline you added.
-2. Set the run parameters as follows (see Section 4 for what each means):
+| **③** | Ensure the Pipeline Server is configured with the results S3 connection from 7.2 so artifacts are stored in the expected bucket. |
+| **④** | Start the run and wait for it to complete. |
 
-   | Parameter | Value |
-   |-----------|--------|
-   | **train_data_secret_name** | The connection (resource) name you created for training data in step 7.4 |
-   | **train_data_bucket_name** | The bucket name where you uploaded the CSV in step 7.5 |
-   | **train_data_file_key** | The object key (path) of the file, e.g. `data/WA_FnUseC_TelcoCustomerChurn.csv` or `WA_FnUseC_TelcoCustomerChurn.csv` |
-   | **label_column** | `Churn` |
-   | **task_type** | `binary` |
-   | **top_n** (optional) | `3` (default) or another positive integer |
-
-   If the UI asks for an experiment or run name (e.g. “Customer Churn”, “Customer Churn Prediction”), set them as run metadata; AutoML uses the parameters in the table above.
-
-3. Ensure the Pipeline Server is configured with the results S3 connection from 7.2 so artifacts are stored in the expected bucket.
-4. Start the run and wait for it to complete.
-
-### 7.8. View the leaderboard
+### 7.8. 📊 View the leaderboard
 
 After the run has completed successfully:
 
-1. Open the run details and go to **Artifacts** (or the artifact store configured for the run).
-2. Locate the **leaderboard** artifact (e.g., an HTML file in the leaderboard-evaluation output).
-3. Download or open the HTML leaderboard to compare the ranked models and their metrics.
+| Step | Action |
+|------|--------|
+| **①** | Open the run details and go to **Artifacts** (or the artifact store configured for the run). |
+| **②** | Locate the **leaderboard** artifact (e.g., an HTML file in the leaderboard-evaluation output). |
+| **③** | Download or open the HTML leaderboard to compare the ranked models and their metrics. |
 
 For exact artifact paths and layout, see the pipeline reference below.
 
-### 7.9. Predictor Notebook
-TODO
+### 7.9. 📓 Predictor Notebook
 
-### 7.10. Model Registry
-TODO
+The AutoML pipeline generates a **predictor notebook** (e.g. `automl_predictor_notebook.ipynb`) that loads and uses the selected AutoGluon predictor for predictions, evaluation, and exploration. You can download this notebook from the run artifacts, upload it to your workbench, run it, and customize it as needed.
+
+| Step | Action |
+|------|--------|
+| **①** | After the AutoML run completes, open the run details and go to **Artifacts** (same as in [7.8](#78-view-the-leaderboard)). Locate the **notebook-generation** output and the generated notebook file (e.g. `automl_predictor_notebook.ipynb`). |
+| **②** | **Download** the notebook to your local machine: use the **Download** action in the Pipelines UI for that artifact, or download it from the artifact store (S3) if you have access (e.g. via the workbench S3 connection from 7.2 and 7.3). The notebook is under a path like `<run_id>/notebook-generation/<task_id>/notebook_artifact/automl_predictor_notebook.ipynb` (see the [pipeline reference](https://github.com/LukaszCmielowski/pipelines-components/tree/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline) for the exact layout). |
+| **③** | Open your **workbench** (the notebook environment you created in 7.1). In JupyterLab, click the **Upload** button (upload icon) in the File Browser sidebar, select the downloaded `.ipynb` file, and upload it. The notebook appears in your workbench file tree. |
+| **④** | Open the notebook and **run** it cell by cell. Ensure the workbench has access to the same S3 bucket (or the path configured in the notebook) so it can load the AutoGluon predictor and any data the notebook expects. Attach the results S3 connection to the workbench if you have not already (see 7.3). |
+| **⑤** | **Customize** if required: edit the model path or artifact location to point to a specific refitted model (e.g. `LightGBM_BAG_L1_FULL`), add cells for extra visualizations or metrics, change sample data, or adapt the notebook for your own workflows. Save the notebook in the workbench when done. |
+
+For exact artifact paths and layout, see the [pipeline reference](https://github.com/LukaszCmielowski/pipelines-components/tree/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline). For creating and importing notebooks in the workbench, see [Creating and importing notebooks](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.8/html/working_on_data_science_projects/creating-and-importing-notebooks_notebooks) in the Red Hat OpenShift AI documentation.
+
+### 7.10. 📚 Model Registry
+
+The [autogluon-tabular-training-pipeline](https://github.com/LukaszCmielowski/pipelines-components/blob/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline/pipeline.py) loads data from S3, splits it, runs **model selection** (top N on sampled data), then **refits** each top model on the full dataset via `autogluon_models_full_refit`. Each refitted model is written as a **model artifact** with a `_FULL` suffix (e.g. `LightGBM_BAG_L1_FULL`, `WeightedEnsemble_L3_FULL`). The pipeline does **not** register models in Model Registry; it only produces the leaderboard and model artifacts in your pipeline artifact store (S3). To version and deploy a chosen model, you register it manually in **Red Hat OpenShift AI Model Registry** as described below.
+
+**Creating a model registry (one-time, typically by an administrator)**
+
+If your cluster does not yet have a model registry, an OpenShift AI administrator must create one and connect it to an external MySQL database.
+
+| Step | Action |
+|------|--------|
+| **①** | From the OpenShift AI dashboard, go to **Settings** → **Model registry settings**. |
+| **②** | Click **Create model registry**. In the dialog, enter a **Name** (and optionally a **Description**). Optionally edit the **Resource name** (must be lowercase alphanumeric with hyphens, max 253 characters). |
+| **③** | In **Connect to external MySQL database**, enter **Host**, **Port**, **Username**, **Password**, and **Database**. Add a CA certificate if the database uses TLS. |
+| **④** | Click **Create**. The new model registry appears on the Model registry settings page. |
+
+For full details and prerequisites (e.g. MySQL 5.x or 8.x), see [Creating a model registry](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_cloud_service/1/html/managing_model_registries/creating-a-model-registry_managing-model-registries) in the Red Hat OpenShift AI documentation.
+
+**Registering a refitted AutoGluon model from the pipeline run**
+
+The refit stage writes each top-N model to the pipeline workspace/artifact store; the **Path** you give when registering must point to the **root folder of one refitted predictor** (the folder that contains the AutoGluon predictor files for that model, named with the `_FULL` suffix). Use the same S3-compatible bucket and credentials that your Pipeline Server uses for run artifacts. The exact path depends on your run; it is typically under the run’s output directory, per refit task, e.g. under a path like `.../autogluon-models-full-refit/<task_id>/model_artifact/<ModelName>_FULL/`.
+
+| Step | Action |
+|------|--------|
+| **①** | From the OpenShift AI dashboard, go to **Models** → **Model registry** and select your model registry. |
+| **②** | Click **Register model**. In the **Register model** dialog, under **Model location**, select **Object storage** (S3-compatible). |
+| **③** | Enter the S3 details for your pipeline artifact store: **Endpoint**, **Bucket**, **Region**, and **Path** to the **model root folder** of one refitted predictor (e.g. the folder containing the `_FULL` model files for `LightGBM_BAG_L1_FULL` or `WeightedEnsemble_L3_FULL` from your run). You can get the path from the run’s **Artifacts** (inspect the refit task output) or from your artifact store layout. Alternatively, click **Autofill from connection** if you have a connection that can access that bucket and path. |
+| **④** | Enter **Model name** and optional **Description**. Enter **Version name** and set **Source model format** (e.g. custom or the format your registry uses for AutoGluon). |
+| **⑤** | Click **Register**. The model appears in the Model registry and can be used for versioning, promotion, and deployment (e.g. via the single-model serving platform). |
+
+For the pipeline definition and artifact layout, see the [autogluon_tabular_training_pipeline](https://github.com/LukaszCmielowski/pipelines-components/tree/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline) (pipeline name: `autogluon-tabular-training-pipeline`). For more on working with model registries, see [Working with model registries](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.22/html/working_with_model_registries/working-with-model-registries_model-registry).
 
 
-### 7.11. Model Deployment (KServe — Autogluon ensemble on Red Hat OpenShift AI)
+### 7.11. 🚀 Model Deployment (KServe — Autogluon ensemble on Red Hat OpenShift AI)
 
 This section describes how to deploy an Autogluon ensemble on the cluster using KServe. You can obtain the serving image in one of two ways; both paths then converge to creating a **Serving Runtime** and deploying the model.
 
