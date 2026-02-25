@@ -258,10 +258,10 @@ The Dockerfile is located at `python/autogluon.Dockerfile`; the build must be ru
 
 **Dockerfile reference**
 
-Build the image from a Dockerfile like the following (it is available in the cloned repo as `python/autogluon.Dockerfile`). It uses Python 3.11, installs KServe and storage dependencies, then the Autogluon server. Use it in the build command in step 1.
+Build the image from a Dockerfile like the following (it is available in the cloned repo as `python/autogluon.Dockerfile`). It uses Python 3.12, installs KServe and storage dependencies, then the Autogluon server. Use it in the build command in step 1.
 
 ```dockerfile
-ARG PYTHON_VERSION=3.11
+ARG PYTHON_VERSION=3.12
 ARG BASE_IMAGE=python:${PYTHON_VERSION}-slim-bookworm
 ARG VENV_PATH=/prod_venv
 
@@ -406,7 +406,7 @@ The following steps apply whether the image was built locally (Path A) or on Ope
 
 ##### Prepare ServingRuntime YAML
 
-Create a YAML file for the KServe Serving Runtime. Set `metadata.namespace` to your project (e.g. `automl-project`). Set `image` according to how you obtained the image. 
+Create a YAML file for the KServe Serving Runtime. Set `metadata.namespace` to your project namespace (replace the placeholder value with your own namespace). Set `image` according to how you obtained the image. 
 
 - **Path A (Quay):** `quay.io/<YOUR_QUAY_USERNAME>/kserve-autogluonserver:latest`
 - **Path B (build on cluster):** `image-registry.openshift-image-registry.svc:5000/<namespace>/<image_stream_name>:latest` (use the same namespace and image stream name as in the ImageStream and BuildConfig above)
@@ -418,7 +418,7 @@ apiVersion: serving.kserve.io/v1alpha1
 kind: ServingRuntime
 metadata:
   name: kserve-autogluonserver
-  namespace: automl-project
+  namespace: <your-namespace>
 spec:
   annotations:
     prometheus.kserve.io/port: "8080"
@@ -454,7 +454,7 @@ spec:
           memory: 2Gi
 ```
 
-Replace `{SERVING_IMAGE}` with the value for your scenario; set `automl-project` to your namespace if needed. The model name is now provided during deployment in **Model deployment name**.
+Replace `{SERVING_IMAGE}` with the value for your scenario and replace `<your-namespace>` with your project namespace. The model name is now provided during deployment in **Model deployment name**.
 
 ##### Create the Serving Runtime on OpenShift
 
