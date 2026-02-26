@@ -457,9 +457,10 @@ kind: ServingRuntime
 metadata:
   name: kserve-autogluonserver
   namespace: {NAMESPACE}
-spec:
   annotations:
     openshift.io/display-name: "AutoGluon ServingRuntime for KServe"
+spec:
+  annotations:
     prometheus.kserve.io/port: "8080"
     prometheus.kserve.io/path: "/metrics"
   supportedModelFormats:
