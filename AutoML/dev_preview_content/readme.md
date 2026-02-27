@@ -32,7 +32,10 @@
   - [Model Registry](#model-registry)
   - [Model Deployment (KServe — AutoGluon ensemble on Red Hat OpenShift AI)](#model-deployment-kserve--autogluon-ensemble-on-red-hat-openshift-ai)
     - [Build image directly on Red Hat OpenShift AI](#build-image-directly-on-red-hat-openshift-ai)
-    - [Common steps (after the image is built on cluster)](#common-steps-after-the-image-is-built-on-cluster)
+    - [Prepare ServingRuntime YAML](#prepare-servingruntime-yaml)
+    - [Create the Serving Runtime on OpenShift](#create-the-serving-runtime-on-openshift)
+    - [Create the deployment with your AutoGluon ensemble](#create-the-deployment-with-your-autogluon-ensemble)
+    - [Make the deployment available for inference from outside the cluster](#make-the-deployment-available-for-inference-from-outside-the-cluster)
 - [References](#references)
 
 ---
