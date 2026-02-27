@@ -30,7 +30,7 @@
   - [View the leaderboard](#-view-the-leaderboard)
   - [Predictor Notebook](#-predictor-notebook)
   - [Model Registry](#-model-registry)
-  - [AutoGluon ServingRuntime with KServe preparation](#%EF%B8%8F-autogluon-servingruntime-with-kserve-preparation)
+  - [Prepare the ServingRuntime for AutoGluon with KServe](#%EF%B8%8F-prepare-the-servingruntime-for-autogluon-with-kserve)
   - [Model Deployment](#-model-deployment)
   - [Deployment Scoring](#-deployment-scoring)
 - [References](#references)
@@ -271,7 +271,7 @@ The refit stage writes each top-N model to the pipeline workspace/artifact store
 For the pipeline definition and artifact layout, see the [autogluon_tabular_training_pipeline](https://github.com/LukaszCmielowski/pipelines-components/tree/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline) (pipeline name: `autogluon-tabular-training-pipeline`). For more on working with model registries, see [Working with model registries](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.22/html/working_with_model_registries/working-with-model-registries_model-registry).
 
 
-### ⚙️ AutoGluon ServingRuntime with KServe preparation
+### ⚙️ Prepare the ServingRuntime for AutoGluon with KServe 
 
 This section describes how to prepare the AutoGluon serving image and **Serving Runtime** on the cluster using KServe. Build the serving image directly on the cluster using OpenShift ImageStream and BuildConfig, then create the Serving Runtime so it is available when you deploy a model.
 
