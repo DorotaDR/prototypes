@@ -30,12 +30,9 @@
   - [View the leaderboard](#view-the-leaderboard)
   - [Predictor Notebook](#predictor-notebook)
   - [Model Registry](#model-registry)
-  - [Model Deployment (KServe — AutoGluon ensemble on Red Hat OpenShift AI)](#model-deployment-kserve--autogluon-ensemble-on-red-hat-openshift-ai)
-    - [Build image directly on Red Hat OpenShift AI](#build-image-directly-on-red-hat-openshift-ai)
-    - [Prepare ServingRuntime YAML](#prepare-servingruntime-yaml)
-    - [Create the Serving Runtime on OpenShift](#create-the-serving-runtime-on-openshift)
-    - [Create the deployment with your AutoGluon ensemble](#create-the-deployment-with-your-autogluon-ensemble)
-    - [Make the deployment available for inference from outside the cluster](#make-the-deployment-available-for-inference-from-outside-the-cluster)
+  - [AutoGluon ServingRuntime with KServe preparation](#autogluon-servingruntime-with-kserve-preparation)
+  - [Model Deployment](#model-deployment)
+  - [Deployment Scoring](#deployment-scoring)
 - [References](#references)
 
 ---
@@ -274,14 +271,14 @@ The refit stage writes each top-N model to the pipeline workspace/artifact store
 For the pipeline definition and artifact layout, see the [autogluon_tabular_training_pipeline](https://github.com/LukaszCmielowski/pipelines-components/tree/rhoai_automl/pipelines/training/automl/autogluon_tabular_training_pipeline) (pipeline name: `autogluon-tabular-training-pipeline`). For more on working with model registries, see [Working with model registries](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.22/html/working_with_model_registries/working-with-model-registries_model-registry).
 
 
-### 🚀 Model Deployment (KServe — AutoGluon ensemble on Red Hat OpenShift AI)
+### 🚀 AutoGluon ServingRuntime with KServe preparation
 
-This section describes how to deploy an AutoGluon ensemble on the cluster using KServe. Build the serving image directly on the cluster using OpenShift ImageStream and BuildConfig, then create a **Serving Runtime** and deploy the model.
+This section describes how to prepare the AutoGluon serving image and **Serving Runtime** on the cluster using KServe. Build the serving image directly on the cluster using OpenShift ImageStream and BuildConfig, then create the Serving Runtime so it is available when you deploy a model.
 
 **Flow overview**
 
 1. **Build the image** on the cluster using OpenShift ImageStream and BuildConfig. *(Steps described below.)*
-2. **Prepare ServingRuntime YAML** → **create Serving Runtime on the cluster** → **create a deployment** with your AutoGluon model (e.g. from S3). The image is in the internal registry, so you do not need to add image-pull credentials.
+2. **Prepare ServingRuntime YAML** and **create the Serving Runtime** on the cluster. The image is in the internal registry, so you do not need to add image-pull credentials. After this, the runtime is ready for [Model Deployment](#model-deployment).
 
 ---
 
@@ -392,9 +389,9 @@ Replace `{SERVING_IMAGE}` with the image URL above and `{NAMESPACE}` with your p
 5. In **Select the model types this runtime supports**, select **Predictive model**.
 6. Click **Create**.
 
-##### Create the deployment with your AutoGluon ensemble
+### 🚀 Model Deployment
 
-This assumes your AutoGluon model (e.g. from an AutoML run) is stored in S3.
+After the [AutoGluon ServingRuntime](#autogluon-servingruntime-with-kserve-preparation) is created, deploy your AutoGluon model (e.g. from an AutoML run) so it is available for inference. This assumes the model is stored in S3.
 
 1. In the left menu: **AI hub** → **Deployments** → **Deploy model**.
 2. Under **Model location**, choose **S3 object storage**.
@@ -407,29 +404,22 @@ This assumes your AutoGluon model (e.g. from an AutoML run) is stored in S3.
 9. Under **Serving runtime**, choose **Select from list…** → **AutoGluon ServingRuntime for KServe**.
 10. Click **Next** → **Deploy model**.
 
-After the deployment is created, you can use the deployed endpoint for inference. For more on serving and APIs, see [Deploying models on the single-model serving platform](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_cloud_service/1/html/deploying_models/deploying_models_on_the_single_model_serving_platform).
+> **Note:** When creating or editing the deployment, you can configure **Advanced settings** to control access and reachability—for example, **Require token authentication** for secured access, or **Make model deployment available through an external route** so you can call the model from outside the cluster (e.g. for scoring from your laptop or another service). After the deployment is running, use the inference endpoint URL from the deployment details. See [Deployment Scoring](#deployment-scoring) for an example request.
 
+For more on serving and APIs, see [Deploying models on the single-model serving platform](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_cloud_service/1/html/deploying_models/deploying_models_on_the_single_model_serving_platform).
 
-##### Make the deployment available for inference from outside the cluster
+### 🚀 Deployment Scoring
 
-To call the model from outside OpenShift (e.g. from your laptop or another service), expose it via an external route and use the external inference URL.
+To score the deployed model from outside the cluster, use the **external** inference URL (ensure **Make model deployment available through an external route** is enabled in the deployment’s Advanced settings). In the deployment details, under **Inference endpoint**, copy the external URL and use it in your requests.
 
-> **Note:** The deployment must be **stopped** before you can edit it. After saving your changes, **start the deployment** again.
+Example request (replace the placeholders and send a POST to your deployment’s predict endpoint):
 
-1. In the OpenShift console: **AI hub** → **Deployments**.
-2. Stop the deployment if it is running, then find your deployment, open the **⋮** (three-dot) menu on the right → **Edit**.
-3. Go to **Advanced settings** and enable **Make model deployment available through an external route**.
-4. Optionally enable or disable **Require token authentication** depending on whether you want token-based access.
-5. Click **Next** → **Update deployment**.
-6. Start the deployment again, then return to **AI hub** → **Deployments** and open your deployment.
-7. When the deployment is running, under **Inference endpoint** you will see **Internal** and **External**. Click the external endpoint to copy the external URL and use it for inference from outside the cluster.
-8. Test the deployed model with a request using the URL copied in the previous step. In the command below, replace:
-    - **`PASTE_EXTERNAL_URL_COPIED_IN_STEP_7`** — The external inference URL you copied in step 7 (base URL only; the path `/v1/models/<model_name>:predict` is appended in the sample).
-    - **`model_name`** — The resource name of the deployment (used in Kubernetes). Find it in **Deployment details** → **Model deployment** → **Resource name**. It is generated from the name you gave the deployment.
-    - **`YOUR_TOKEN`** — The service account token, only if you enabled **Require token authentication** in step 4. If you disabled it, remove the `-H "Authorization: Bearer <YOUR_TOKEN>"` line from the command. 
+- **`DEPLOYMENT_URL`** — The inference URL from the deployment details (base URL only; the path `/v1/models/<MODEL_NAME>:predict` is appended in the sample).
+- **`MODEL_NAME`** — The resource name of the deployment (used in Kubernetes). Find it in **Deployment details** → **Model deployment** → **Resource name**.
+- **`YOUR_TOKEN`** — The service account token, only if you enabled **Require token authentication** in Advanced settings. If you did not, remove the `-H "Authorization: Bearer <YOUR_TOKEN>"` line from the command. 
    ```bash
    curl -X POST \
-   "<PASTE_EXTERNAL_URL_COPIED_IN_STEP_7>/v1/models/<model_name>:predict" \
+   "<DEPLOYMENT_URL>/v1/models/<MODEL_NAME>:predict" \
    -H "Content-Type: application/json" \
    -H "Authorization: Bearer <YOUR_TOKEN>" \
    -d '{
